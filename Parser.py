@@ -20,14 +20,13 @@ class Parser:
 
             # Reached end of classes
             if name == 'regs_row':
-                # Includes dummy class
-                if int(value) + 1 != len(self.Classes):
+                if int(value) != len(self.Classes):
                     raise Exception('Error reading classes')
 
                 break
 
             # Start reading class if not empty
-            if name == 'assoc_term_in':
+            if name == 'assoc_term_in' and value != 'DUMMY':
                 self.readingClass = value != ''
 
                 if self.readingClass:

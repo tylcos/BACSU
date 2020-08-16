@@ -7,10 +7,14 @@ from Parser import Parser
 settings = {'USE_LOGIN': False,
             'USERNAME': LoginInfo.username,
             'PASSWORD': LoginInfo.password,
+            'REQUESTED_CRNs': '84338, 93884, 91445, 89375, 91221, 91200, 91545, 83961, 83660',
+            'SEMESTER': '202008',
+
+            # Program settings
             'BASE_URL': 'https://oscar.gatech.edu/pls/bprod/',
             'LOGIN_URL': 'https://login.gatech.edu/cas/login?service=https://sso.sis.gatech.edu:443/ssomanager/c/SSB',
-            'SEMESTER': '202008',
-            'LT_ID': '<input type="hidden" name="lt" value="'}
+            'LT_ID': '<input type="hidden" name="lt" value="',
+            'PAYLOAD_START': 'term_in=202008&RSTS_IN=DUMMY&assoc_term_in=DUMMY&CRN_IN=DUMMY&start_date_in=DUMMY&end_date_in=DUMMY&SUBJ=DUMMY&CRSE=DUMMY&SEC=DUMMY&LEVL=DUMMY&CRED=DUMMY&GMOD=DUMMY&TITLE=DUMMY&MESG=DUMMY&REG_BTN=DUMMY&MESG=DUMMY&'}
 
 
 s = requests.Session()
@@ -46,7 +50,5 @@ else:
 htmlParser = Parser()
 htmlParser.parse(html)
 
-# response = s.get(settings['BASE_URL'] + 'bwckcoms.P_Regs')
-
-for c in htmlParser.Classes:
-    print(str(c))
+classPayload = settings['PAYLOAD_START'] + '&'.join(map(str, htmlParser.Classes))
+print(classPayload)
