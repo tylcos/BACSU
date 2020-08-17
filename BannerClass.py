@@ -6,7 +6,7 @@ class BannerClass:
         self.data = {}
 
     def __str__(self):
-        # Can be used for dropping classes
+        # Action for each class, DW = Drop, RW = Empty or Signing up, '' = Signed up
         classAction = 'RSTS_IN=&'
 
         return classAction + '&'.join(

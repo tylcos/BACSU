@@ -21,7 +21,7 @@ class Parser:
             # Reached end of classes
             if name == 'regs_row':
                 if int(value) != len(self.Classes):
-                    raise Exception('Error reading classes')
+                    raise Exception(f'Error reading classes, read {len(self.Classes)} classes')
 
                 break
 
@@ -32,5 +32,5 @@ class Parser:
                 if self.readingClass:
                     self.Classes.append(BannerClass())
 
-            if self.readingClass:
+            if self.readingClass and name != 'RSTS_IN':
                 self.CurrentClass().data[name] = value
