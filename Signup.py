@@ -18,13 +18,6 @@ settings = {'USE_LOGIN': True,
                              '&end_date_in=DUMMY&SUBJ=DUMMY&CRSE=DUMMY&SEC=DUMMY&LEVL=DUMMY&CRED=DUMMY&GMOD=DUMMY'
                              '&TITLE=DUMMY&MESG=DUMMY&REG_BTN=DUMMY&MESG=DUMMY&'}
 
-'''
-# SESSID changes after each request and needs to be updated for future requests
-def UpdateSESSID():
-    SetCookie = str(response.headers['Set-Cookie']).split(';')
-    SESSID = [c for i, c in enumerate(SetCookie) if 'SESSID=' in c][0]
-    s.cookies.set(name='SESSID', value=SESSID[7:], domain='oscar.gatech.edu', path='/pls/bprod')'''
-
 
 # Login and request current classes
 s = requests.Session()
@@ -63,7 +56,7 @@ classPayload = settings['PAYLOAD_START'] + '&'.join(map(str, htmlParser.Classes)
 # Finish payload by appending classes that need to be added
 RequestedCRNs = set(settings['REQUESTED_CRNs'].replace(' ', '').split(','))
 CurrentCRNs = set(map(lambda c: c.data['CRN_IN'], htmlParser.Classes))
-CRNsToAdd = list(RequestedCRNs.difference(CurrentCRNs))  # [c for c in RequestedCRNs if c not in CurrentCRNs]
+CRNsToAdd = list(RequestedCRNs.difference(CurrentCRNs))
 
 regs_row = len(htmlParser.Classes)  # Current number of classes
 add_row = regs_row + len(CRNsToAdd)  # Total number of classes after adding new classes
