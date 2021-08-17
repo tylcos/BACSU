@@ -3,15 +3,15 @@ from bs4 import BeautifulSoup
 from BannerClass import BannerClass
 
 
-class Parser:
+class ClassParser:
     Classes = []
 
     readingClass = False
 
     def CurrentClass(self):
-        return self.Classes[len(self.Classes) - 1]
+        return self.Classes[-1]
 
-    def parse(self, html):
+    def __init__(self, html):
         soup = BeautifulSoup(html, 'html.parser')
 
         for tag in soup.find_all('input', attrs={"name": True, "value": True}):

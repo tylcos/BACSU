@@ -32,8 +32,8 @@ def updateSeats():
                 print('Invalid class CRN: ' + crn)
 
             if remainingSeats > 0:
-                if not opened[i]:
-                    opened[i] = True
+                if not hasOpenSeats[i]:
+                    hasOpenSeats[i] = True
 
                     winsound.Beep(2000, 500)
                     clipboard.copy(crn)
@@ -41,7 +41,7 @@ def updateSeats():
 
                 print('Seat available in CRN: ' + crn + ' with ' + str(currentSeats) + ' out of ' + str(totalSeats))
             else:
-                opened[i] = False
+                hasOpenSeats[i] = False
         except Exception as e:
             print('Error reaching ' + url + ' with error: ' + str(e))
 
@@ -52,7 +52,7 @@ s.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
                           '(KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
 crns = requestedCRNs.replace(' ', '').split(',')
-opened = [False] * len(crns)
+hasOpenSeats = [False] * len(crns)  # True if a class has open seats
 
 requestNumber = 0
 while True:
@@ -61,10 +61,10 @@ while True:
     requestTime = time.time()
     updateSeats()
 
-    if not any(opened):
+    if not any(hasOpenSeats):
         print('No seats available in any classes')
 
-    sleepTime = requestInterval - (time.time() - requestTime)
+    sleepTime = requestTime + requestInterval - time.time()
     if sleepTime > 0:
         time.sleep(sleepTime)
     else:
