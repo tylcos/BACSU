@@ -1,13 +1,13 @@
+import datetime
 import random
+import time
 
 import requests
-import time
 
 import PayloadGenerator
 
-
 settings = {
-    # CRNs to sign up for seperated by comma.
+    # CRNs to sign up for seperated by a comma.
     'REQUESTED_CRNs': '',
 
     # SESSID Cookie. After copying the SESSID, close the browser tab where you copied it to
@@ -15,14 +15,14 @@ settings = {
     'SESSID': '',
 
     # Semester code.
-    'SEMESTER': '202108',
+    'SEMESTER': '202202',
 
 
     # Wait for time ticket to start before sending requests.
     'WAIT_FOR_TICKET': True,
 
     # Time that the time ticket starts.
-    'TICKET_START_TIME': '8/18/2021 10:30',
+    'TICKET_START_TIME': '11/08/2021 15:00',
 
     # Number of seconds before the time ticket starts to check for a valid time ticket.
     # Used in case the ticket starts early or your time is off from the server.
@@ -32,6 +32,19 @@ settings = {
     # Begins checking TICKET_CHECK_HEADSTART seconds before TICKET_START_TIME.
     'TICKET_CHECK_INTERVAL': 5
 }
+
+
+def sleepWithCallback(waitTime: float, callbackInterval: float, callback) -> None:
+    while waitTime > 0:
+        currentSleepTime = max(waitTime, callbackInterval)
+
+        time.sleep(currentSleepTime)
+        waitTime -= currentSleepTime
+
+        callback(waitTime)
+
+def formatSeconds(seconds):
+    return str(datetime.timedelta(seconds = round(seconds)))
 
 
 def main():
@@ -59,30 +72,36 @@ def main():
 
     # Check if login succesfull
     if '<h2>Add/Drop Classes: </h2>' not in responseStr:
-        raise Exception('Error logging in')
+        raise Exception('Error logging in, bad SESSID.')
+
 
     # Check if user has time ticket
-    validTicket = '<h3>Current Schedule</h3>' in responseStr
-    if not validTicket:
+    if '<h3>Current Schedule</h3>' not in responseStr:
         if not settings['WAIT_FOR_TICKET']:
             raise Exception('Time ticket hasn\'t started yet. Enable WAIT_FOR_TICKET to wait until the ticket starts.')
 
 
         startTime = time.mktime(time.strptime(settings['TICKET_START_TIME'], "%m/%d/%Y %H:%M"))
         checkTime = startTime - settings['TICKET_CHECK_HEADSTART']
-        sleepTime = checkTime - time.time()
+
 
         # Sleep until check for valid time ticket
-        if sleepTime > 0:
-            print(f'{round(sleepTime, 1)} seconds until check for valid time ticket.')
-            time.sleep(sleepTime)
+        def keepSessionAlive(timeLeft):
+            response = s.post('https://oscar.gatech.edu/pls/bprod/bwskfreg.P_AltPin', data={'term_in': settings['SEMESTER']})
+            responseStr = str(response.content)
+
+            if '<h2>Add/Drop Classes: </h2>' not in responseStr:
+                raise Exception('SESSID has become invalid.')
+            
+            print(f'Waiting {formatSeconds(timeLeft)} until check for valid time ticket.')
+
+        sleepTime = checkTime - time.time()
+        print(f'Waiting {formatSeconds(sleepTime)} until check for valid time ticket.')
+        sleepWithCallback(sleepTime, 30 * 60, keepSessionAlive)
+
 
         # Start checking for valid time ticket
-        response = s.post('https://oscar.gatech.edu/pls/bprod/bwskfreg.P_AltPin', data={'term_in': settings['SEMESTER']})
-        responseStr = str(response.content)
-        validTicket = '<h3>Current Schedule</h3>' in responseStr
-
-        while not validTicket:
+        while '<h3>Current Schedule</h3>' not in responseStr:
             time.sleep(settings['TICKET_CHECK_INTERVAL'] + random.uniform(-1, 1))
 
             timeUntilStart = startTime - time.time()
@@ -93,7 +112,6 @@ def main():
 
             response = s.post('https://oscar.gatech.edu/pls/bprod/bwskfreg.P_AltPin', data={'term_in': settings['SEMESTER']})
             responseStr = str(response.content)
-            validTicket = '<h3>Current Schedule</h3>' in responseStr
 
         print('Verified ticket has started.')
 
