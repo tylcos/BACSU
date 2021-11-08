@@ -6,6 +6,7 @@ import requests
 
 import PayloadGenerator
 
+
 settings = {
     # CRNs to sign up for seperated by a comma.
     'REQUESTED_CRNs': '',
@@ -34,14 +35,19 @@ settings = {
 }
 
 
+loginPageCheck = '<h2>Add/Drop Classes: </h2>'
+addPageCheck = '<h3>Add Classes Worksheet</h3>'
+
+
 def sleepWithCallback(waitTime: float, callbackInterval: float, callback) -> None:
     while waitTime > 0:
-        currentSleepTime = max(waitTime, callbackInterval)
+        callback(waitTime)
 
-        time.sleep(currentSleepTime)
+        currentSleepTime = min(waitTime, callbackInterval)
         waitTime -= currentSleepTime
 
-        callback(waitTime)
+        time.sleep(currentSleepTime)
+
 
 def formatSeconds(seconds):
     return str(datetime.timedelta(seconds = round(seconds)))
@@ -71,12 +77,12 @@ def main():
     responseStr = str(response.content)
 
     # Check if login succesfull
-    if '<h2>Add/Drop Classes: </h2>' not in responseStr:
+    if loginPageCheck not in responseStr:
         raise Exception('Error logging in, bad SESSID.')
 
 
     # Check if user has time ticket
-    if '<h3>Current Schedule</h3>' not in responseStr:
+    if addPageCheck not in responseStr:
         if not settings['WAIT_FOR_TICKET']:
             raise Exception('Time ticket hasn\'t started yet. Enable WAIT_FOR_TICKET to wait until the ticket starts.')
 
@@ -90,25 +96,23 @@ def main():
             response = s.post('https://oscar.gatech.edu/pls/bprod/bwskfreg.P_AltPin', data={'term_in': settings['SEMESTER']})
             responseStr = str(response.content)
 
-            if '<h2>Add/Drop Classes: </h2>' not in responseStr:
+            if addPageCheck not in responseStr:    
                 raise Exception('SESSID has become invalid.')
             
             print(f'Waiting {formatSeconds(timeLeft)} until check for valid time ticket.')
 
-        sleepTime = checkTime - time.time()
-        print(f'Waiting {formatSeconds(sleepTime)} until check for valid time ticket.')
-        sleepWithCallback(sleepTime, 30 * 60, keepSessionAlive)
+        sleepWithCallback(checkTime - time.time(), 30 * 60, keepSessionAlive)
 
 
         # Start checking for valid time ticket
-        while '<h3>Current Schedule</h3>' not in responseStr:
+        while addPageCheck not in responseStr:
             time.sleep(settings['TICKET_CHECK_INTERVAL'] + random.uniform(-1, 1))
 
             timeUntilStart = startTime - time.time()
             if timeUntilStart > 0:
-                print(f'Verified that the ticket hasn\'t started yet. {round(timeUntilStart, 1)} seconds until offical ticket start time.')
+                print(f'The ticket hasn\'t started yet. {round(timeUntilStart, 1)} seconds until offical ticket start time.')
             else:
-                print(f'Ticket should have started {round(-timeUntilStart, 1)} seconds ago, checking again.')
+                print(f'The ticket hasn\'t started yet. Should have started {round(-timeUntilStart, 1)} seconds ago.')
 
             response = s.post('https://oscar.gatech.edu/pls/bprod/bwskfreg.P_AltPin', data={'term_in': settings['SEMESTER']})
             responseStr = str(response.content)
@@ -126,7 +130,6 @@ def main():
 
     # Print final messages. Could easily parse the response to see if the classes were added succesfully.
     print('Request sent and received response code: ' + str(response.status_code))
-    print('Exiting')
 
 
 if __name__ == "__main__":
