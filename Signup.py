@@ -30,7 +30,6 @@ settings = {
     'TICKET_CHECK_HEADSTART': 60,
 
     # Interval to check for time ticket start in seconds.
-    # Begins checking TICKET_CHECK_HEADSTART seconds before TICKET_START_TIME.
     'TICKET_CHECK_INTERVAL': 5
 }
 
@@ -39,13 +38,13 @@ loginPageCheck = '<h2>Add/Drop Classes: </h2>'
 addPageCheck = '<h3>Add Classes Worksheet</h3>'
 
 
-def sleepWithCallback(waitTime: float, callbackInterval: float, callback) -> None:
-    while waitTime > 0:
-        callback(waitTime)
+def sleepWithCallback(endTime: float, callbackInterval: float, callback) -> None:
+    while time.time() < endTime:
+        timeLeft = endTime - time.time()
 
-        currentSleepTime = min(waitTime, callbackInterval)
-        waitTime -= currentSleepTime
+        callback(timeLeft)
 
+        currentSleepTime = min(timeLeft, callbackInterval)
         time.sleep(currentSleepTime)
 
 
@@ -78,13 +77,15 @@ def main():
 
     # Check if login succesfull
     if loginPageCheck not in responseStr:
-        raise Exception('Error logging in, bad SESSID.')
+        print('Error logging in, bad SESSID.')
+        exit()
 
 
     # Check if user has time ticket
     if addPageCheck not in responseStr:
         if not settings['WAIT_FOR_TICKET']:
-            raise Exception('Time ticket hasn\'t started yet. Enable WAIT_FOR_TICKET to wait until the ticket starts.')
+            print('Time ticket hasn\'t started yet. Enable WAIT_FOR_TICKET to wait until the ticket starts.')
+            exit()
 
 
         startTime = time.mktime(time.strptime(settings['TICKET_START_TIME'], "%m/%d/%Y %H:%M"))
@@ -97,11 +98,12 @@ def main():
             responseStr = str(response.content)
 
             if addPageCheck not in responseStr:    
-                raise Exception('SESSID has become invalid.')
+                print('SESSID has become invalid.')
+                exit()
             
             print(f'Waiting {formatSeconds(timeLeft)} until check for valid time ticket.')
 
-        sleepWithCallback(checkTime - time.time(), 30 * 60, keepSessionAlive)
+        sleepWithCallback(checkTime, 30 * 60, keepSessionAlive)
 
 
         # Start checking for valid time ticket
