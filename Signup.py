@@ -16,14 +16,14 @@ settings = {
     'SESSID': '',
 
     # Semester code.
-    'SEMESTER': '202202',
+    'SEMESTER': '202208',
 
 
     # Wait for time ticket to start before sending requests.
     'WAIT_FOR_TICKET': True,
 
     # Time that the time ticket starts.
-    'TICKET_START_TIME': '11/08/2021 15:00',
+    'TICKET_START_TIME': '5/01/2022 08:00',
 
     # Number of seconds before the time ticket starts to check for a valid time ticket.
     # Used in case the ticket starts early or your time is off from the server.
@@ -97,10 +97,6 @@ def main():
             response = s.post('https://oscar.gatech.edu/pls/bprod/bwskfreg.P_AltPin', data={'term_in': settings['SEMESTER']})
             responseStr = str(response.content)
 
-            if addPageCheck not in responseStr:    
-                print('SESSID has become invalid.')
-                exit()
-            
             print(f'Waiting {formatSeconds(timeLeft)} until check for valid time ticket.')
 
         sleepWithCallback(checkTime, 30 * 60, keepSessionAlive)

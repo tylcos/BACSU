@@ -8,7 +8,7 @@ import clipboard
 requestedCRNs = ''
 requestInterval = 60
 
-baseURL = 'https://oscar.gatech.edu/pls/bprod/bwckschd.p_disp_detail_sched?term_in=202108&crn_in='
+baseURL = 'https://oscar.gatech.edu/pls/bprod/bwckschd.p_disp_detail_sched?term_in=202208&crn_in='
 
 
 def updateSeats():
@@ -27,19 +27,29 @@ def updateSeats():
             currentSeats = seats[1]
             remainingSeats = seats[2]
             waitList = seats[4]
+            remainingWaitList = seats[5]
 
-            if totalSeats < 1 or totalSeats != currentSeats + remainingSeats + waitList:
+            if totalSeats < 1 or totalSeats != currentSeats + remainingSeats:
                 print('Invalid class CRN: ' + crn)
 
             if remainingSeats > 0:
-                if not hasOpenSeats[i]:
-                    hasOpenSeats[i] = True
+                if hasOpenSeats[i] < 2:
+                    hasOpenSeats[i] = 2
 
                     winsound.Beep(2000, 500)
                     clipboard.copy(crn)
                     webbrowser.open(url, new=2)
 
                 print('Seat available in CRN: ' + crn + ' with ' + str(currentSeats) + ' out of ' + str(totalSeats))
+            elif remainingWaitList > 0:
+                if hasOpenSeats[i] < 1:
+                    hasOpenSeats[i] = 1
+
+                    winsound.Beep(2000, 500)
+                    clipboard.copy(crn)
+                    webbrowser.open(url, new=2)
+
+                print('Waitlist seat available in CRN: ' + crn + ' with ' + str(remainingWaitList) + ' out of ' + str(waitList))
             else:
                 hasOpenSeats[i] = False
         except Exception as e:
@@ -52,7 +62,7 @@ s.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
                           '(KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
 crns = requestedCRNs.replace(' ', '').split(',')
-hasOpenSeats = [False] * len(crns)  # True if a class has open seats
+hasOpenSeats = [0] * len(crns)  # True if a class has open seats
 
 requestNumber = 0
 while True:
